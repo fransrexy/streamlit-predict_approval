@@ -1,11 +1,34 @@
 import pickle
 import streamlit as st
 import pandas as pd
+import base64
 
 credit_model = pickle.load(open('credit_model.sav', 'rb'))
 
 form = st.form("credit_form", clear_on_submit=True)
 form.title('Form Credit Card Approval', 'rb')
+
+uploaded_file = form.file_uploader("Upload CSV File")
+
+# Tombol untuk memproses file CSV
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+    credit_predict = credit_model.predict(df)
+    
+    # Menampilkan hasil prediksi
+    st.write("Data CSV:")
+    st.write(df)
+    
+    st.write("Predictions:")
+    st.write(credit_predict)
+
+    # Tombol untuk mengunduh hasil prediksi
+    csv = df.copy()
+    csv['Prediction'] = credit_predict
+    csv_file = csv.to_csv(index=False)
+    b64 = base64.b64encode(csv_file.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download="predictions.csv">Download Predictions</a>'
+    st.markdown(href, unsafe_allow_html=True)
 
 ## Menampilkan annual income
 AMT_INCOME_TOTAL = form.number_input('Input Annual Income', min_value=0, value=0)
